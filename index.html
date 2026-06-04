@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OrbitalOS — Sistema de Controle de Satélite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet"/>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Exo+2:wght@300;400;600;800&display=swap');
+:root{--bg-primary:#020810;--bg-secondary:#060f1e;--bg-card:#0a1628;--bg-card-hover:#0e1f38;--accent-blue:#00d4ff;--accent-green:#00ff88;--accent-orange:#ff6b35;--text-primary:#e8f4fd;--text-secondary:#8ba7c4;--text-muted:#4a6a8a;--border:rgba(0,212,255,.18);--border-hover:rgba(0,212,255,.45);--glow:0 0 20px rgba(0,212,255,.25);--glow-strong:0 0 40px rgba(0,212,255,.45);--nav-h:68px;--radius:8px;--font-display:'Space Mono',monospace;--font-body:'Exo 2',sans-serif}
+body.theme-nebula{--bg-primary:#08020f;--bg-secondary:#100620;--bg-card:#180a2e;--bg-card-hover:#200e3c;--accent-blue:#cc66ff;--accent-green:#ff66cc;--border:rgba(204,102,255,.18);--border-hover:rgba(204,102,255,.45);--glow:0 0 20px rgba(204,102,255,.25);--glow-strong:0 0 40px rgba(204,102,255,.45)}
+body.theme-solar{--bg-primary:#0f0a00;--bg-secondary:#1a1000;--bg-card:#261800;--bg-card-hover:#301e00;--accent-blue:#ffb300;--accent-green:#ff6600;--border:rgba(255,179,0,.18);--border-hover:rgba(255,179,0,.45);--glow:0 0 20px rgba(255,179,0,.25);--glow-strong:0 0 40px rgba(255,179,0,.45)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{background-color:var(--bg-primary);color:var(--text-primary);font-family:var(--font-body);line-height:1.65;overflow-x:hidden;transition:background-color .5s,color .5s}
+img{max-width:100%;display:block}
+a{color:var(--accent-blue);text-decoration:none;transition:color .2s,opacity .2s}
+a:hover{opacity:.8}
+ul{list-style:none}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg-primary)}
+::-webkit-scrollbar-thumb{background:var(--accent-blue);border-radius:3px}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(1px 1px at 10% 15%,rgba(255,255,255,.6) 0%,transparent 100%),radial-gradient(1px 1px at 30% 40%,rgba(255,255,255,.4) 0%,transparent 100%),radial-gradient(1px 1px at 55% 20%,rgba(255,255,255,.5) 0%,transparent 100%),radial-gradient(1px 1px at 75% 60%,rgba(255,255,255,.3) 0%,transparent 100%),radial-gradient(1px 1px at 90% 10%,rgba(255,255,255,.5) 0%,transparent 100%),radial-gradient(1px 1px at 20% 80%,rgba(255,255,255,.4) 0%,transparent 100%),radial-gradient(1.5px 1.5px at 40% 90%,rgba(255,255,255,.6) 0%,transparent 100%),radial-gradient(1px 1px at 65% 45%,rgba(255,255,255,.4) 0%,transparent 100%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,212,255,.012) 3px,rgba(0,212,255,.012) 4px);pointer-events:none;z-index:0}
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+.section-label{display:inline-block;font-family:var(--font-display);font-size:.7rem;letter-spacing:4px;text-transform:uppercase;color:var(--accent-blue);border:1px solid var(--border);padding:4px 14px;border-radius:2px;margin-bottom:16px}
+.section-title{font-family:var(--font-display);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:700;color:var(--text-primary);margin-bottom:12px;line-height:1.2}
+.section-sub{font-size:1rem;color:var(--text-secondary);max-width:560px;margin-bottom:48px}
+.highlight{color:var(--accent-blue)}
+.highlight-green{color:var(--accent-green)}
+.fade-in{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+/* NAVBAR */
+#navbar{position:fixed;top:0;left:0;right:0;height:var(--nav-h);background:rgba(2,8,16,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);z-index:1000}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:100%}
+.nav-logo{font-family:var(--font-display);font-size:1.15rem;font-weight:700;color:var(--text-primary);letter-spacing:1px}
+.nav-logo span{color:var(--accent-blue)}
+.nav-links{display:flex;align-items:center;gap:6px}
+.nav-links a{font-family:var(--font-display);font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--text-secondary);padding:6px 12px;border-radius:var(--radius);border:1px solid transparent;transition:all .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--accent-blue);border-color:var(--border);background:rgba(0,212,255,.06);opacity:1}
+.theme-switcher{display:flex;align-items:center;gap:6px;margin-left:16px}
+.theme-btn{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .2s,border-color .2s}
+.theme-btn:hover{transform:scale(1.2)}
+.theme-btn.active{border-color:var(--text-primary)}
+.theme-btn[data-theme="space"]{background:radial-gradient(circle at 35% 35%,#00d4ff,#020810)}
+.theme-btn[data-theme="nebula"]{background:radial-gradient(circle at 35% 35%,#cc66ff,#08020f)}
+.theme-btn[data-theme="solar"]{background:radial-gradient(circle at 35% 35%,#ffb300,#0f0a00)}
+/* HERO */
+#hero{min-height:100vh;display:flex;align-items:center;position:relative;padding-top:var(--nav-h);overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 60% 50%,rgba(0,212,255,.07) 0%,transparent 65%),radial-gradient(ellipse 40% 40% at 15% 80%,rgba(0,255,136,.04) 0%,transparent 60%),var(--bg-primary);z-index:-1}
+.hero-grid{display:flex;align-items:center;gap:60px}
+.hero-text{flex:1}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--accent-green);border:1px solid rgba(0,255,136,.25);padding:5px 14px;border-radius:2px;margin-bottom:28px}
+.hero-tag::before{content:'';width:7px;height:7px;background:var(--accent-green);border-radius:50%;animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hero-title{font-family:var(--font-display);font-size:clamp(2.2rem,5vw,3.8rem);font-weight:700;line-height:1.05;color:var(--text-primary);margin-bottom:24px}
+.hero-sub{font-size:1.05rem;color:var(--text-secondary);max-width:480px;margin-bottom:40px}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:.75rem;letter-spacing:2px;text-transform:uppercase;padding:13px 28px;border-radius:var(--radius);border:1px solid transparent;cursor:pointer;transition:all .25s;text-decoration:none}
+.btn-primary{background:var(--accent-blue);color:var(--bg-primary);font-weight:700}
+.btn-primary:hover{box-shadow:var(--glow-strong);transform:translateY(-2px);opacity:1}
+.btn-ghost{background:transparent;color:var(--accent-blue);border-color:var(--border)}
+.btn-ghost:hover{border-color:var(--border-hover);background:rgba(0,212,255,.07);opacity:1}
+.hero-visual{flex:0 0 340px;position:relative;height:340px;display:flex;align-items:center;justify-content:center}
+.orbit-ring{position:absolute;border-radius:50%;border:1px solid var(--border)}
+.orbit-ring:nth-child(1){width:280px;height:280px;animation:spin1 20s linear infinite}
+.orbit-ring:nth-child(2){width:200px;height:200px;animation:spin1 14s linear infinite reverse}
+.orbit-ring:nth-child(3){width:120px;height:120px;animation:spin1 8s linear infinite}
+.orbit-dot{position:absolute;width:10px;height:10px;background:var(--accent-blue);border-radius:50%;box-shadow:var(--glow);top:-5px;left:50%;transform:translateX(-50%)}
+.orbit-ring:nth-child(2) .orbit-dot{background:var(--accent-green)}
+.orbit-ring:nth-child(3) .orbit-dot{background:var(--accent-orange);width:8px;height:8px}
+@keyframes spin1{to{transform:rotate(360deg)}}
+.orbit-center{position:relative;z-index:2;font-size:3.5rem;filter:drop-shadow(0 0 20px rgba(0,212,255,.5))}
+/* SECTIONS */
+.section{padding:90px 0;position:relative}
+.section:nth-child(even){background:var(--bg-secondary)}
+/* SLIDESHOW */
+.slideshow-wrap{position:relative;max-width:820px;margin:0 auto 70px;border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--glow)}
+.slideshow{position:relative;height:340px}
+.slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;opacity:0;transition:opacity .7s ease;padding:40px;text-align:center}
+.slide.active{opacity:1}
+.slide-icon{font-size:4.5rem;filter:drop-shadow(0 0 16px rgba(0,212,255,.4))}
+.slide-title{font-family:var(--font-display);font-size:1.25rem;color:var(--text-primary)}
+.slide-desc{font-size:.95rem;color:var(--text-secondary);max-width:460px}
+.slide:nth-child(1){background:linear-gradient(135deg,#060f1e,#0a1a30)}
+.slide:nth-child(2){background:linear-gradient(135deg,#08120a,#0a1e0e)}
+.slide:nth-child(3){background:linear-gradient(135deg,#130a06,#1e120a)}
+.slide-dots{display:flex;justify-content:center;gap:8px;padding:14px;background:var(--bg-card)}
+.slide-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);cursor:pointer;border:none;transition:background .3s,transform .3s}
+.slide-dot.active{background:var(--accent-blue);transform:scale(1.3)}
+.slide-arrows{position:absolute;top:50%;left:0;right:0;display:flex;justify-content:space-between;transform:translateY(-50%);padding:0 14px;pointer-events:none}
+.slide-arrow{background:rgba(2,8,16,.7);border:1px solid var(--border);color:var(--accent-blue);font-size:1.1rem;width:36px;height:36px;border-radius:50%;cursor:pointer;pointer-events:all;display:flex;align-items:center;justify-content:center;transition:background .2s,box-shadow .2s}
+.slide-arrow:hover{background:rgba(0,212,255,.15);box-shadow:var(--glow)}
+/* CARDS */
+.cards-grid{display:flex;flex-wrap:wrap;gap:20px}
+.card{flex:1 1 220px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;transition:border-color .2s,box-shadow .2s,background .2s}
+.card:hover{border-color:var(--border-hover);box-shadow:var(--glow);background:var(--bg-card-hover)}
+.card-icon{font-size:2.2rem;margin-bottom:14px}
+.card-title{font-family:var(--font-display);font-size:.9rem;color:var(--text-primary);margin-bottom:8px}
+.card-text{font-size:.9rem;color:var(--text-secondary)}
+/* PROBLEMA */
+.problema-layout{display:flex;align-items:center;gap:60px}
+.problema-visual{flex:0 0 260px;text-align:center}
+.problema-visual .big-icon{font-size:7rem;filter:drop-shadow(0 0 24px rgba(255,107,53,.4))}
+.problema-text{flex:1}
+/* TECH TAGS */
+.tech-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
+.tech-tag{display:flex;align-items:center;gap:8px;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:8px 16px;font-family:var(--font-display);font-size:.72rem;letter-spacing:1px;color:var(--text-primary);transition:border-color .2s,box-shadow .2s}
+.tech-tag:hover{border-color:var(--border-hover);box-shadow:var(--glow)}
+.tech-tag span{font-size:1.2rem}
+/* FORM */
+.form-wrap{max-width:600px}
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.form-group label{font-family:var(--font-display);font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent-blue)}
+.form-group input,.form-group textarea,.form-group select{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;color:var(--text-primary);font-family:var(--font-body);font-size:.95rem;outline:none;transition:border-color .2s,box-shadow .2s}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--border-hover);box-shadow:0 0 0 3px rgba(0,212,255,.1)}
+.form-group textarea{resize:vertical;min-height:110px}
+.form-group .error-msg{color:var(--accent-orange);font-size:.8rem;display:none}
+.form-group.invalid .error-msg{display:block}
+.form-group.invalid input,.form-group.invalid textarea,.form-group.invalid select{border-color:var(--accent-orange)}
+.form-success{display:none;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.3);border-radius:var(--radius);padding:18px;color:var(--accent-green);font-family:var(--font-display);font-size:.85rem;margin-top:16px;text-align:center}
+/* QUIZ */
+.quiz-wrap{max-width:700px}
+.quiz-progress-bar{height:4px;background:var(--border);border-radius:2px;margin-bottom:28px;overflow:hidden}
+.quiz-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent-blue),var(--accent-green));border-radius:2px;transition:width .4s ease}
+.quiz-counter{font-family:var(--font-display);font-size:.72rem;letter-spacing:2px;color:var(--text-muted);margin-bottom:14px}
+.quiz-question{font-family:var(--font-display);font-size:1.1rem;color:var(--text-primary);margin-bottom:24px;line-height:1.4}
+.quiz-options{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.quiz-option{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 18px;cursor:pointer;text-align:left;color:var(--text-primary);font-family:var(--font-body);font-size:.95rem;transition:all .2s;display:flex;align-items:center;gap:12px}
+.quiz-option::before{content:attr(data-letter);font-family:var(--font-display);font-size:.75rem;color:var(--accent-blue);width:22px;flex-shrink:0}
+.quiz-option:hover:not(:disabled){border-color:var(--border-hover);background:var(--bg-card-hover)}
+.quiz-option.correct{border-color:var(--accent-green);background:rgba(0,255,136,.08)}
+.quiz-option.wrong{border-color:var(--accent-orange);background:rgba(255,107,53,.08)}
+.quiz-option:disabled{cursor:not-allowed}
+.quiz-feedback{font-size:.9rem;padding:10px 16px;border-radius:var(--radius);margin-bottom:16px;display:none}
+.quiz-feedback.show{display:block}
+.quiz-feedback.correct-fb{background:rgba(0,255,136,.1);color:var(--accent-green);border:1px solid rgba(0,255,136,.3)}
+.quiz-feedback.wrong-fb{background:rgba(255,107,53,.1);color:var(--accent-orange);border:1px solid rgba(255,107,53,.3)}
+.quiz-result{display:none;text-align:center;padding:40px 20px}
+.quiz-result.show{display:block}
+.quiz-result-score{font-family:var(--font-display);font-size:4rem;font-weight:700;color:var(--accent-blue);margin-bottom:8px}
+.quiz-result-label{font-size:1rem;color:var(--text-secondary);margin-bottom:24px}
+.quiz-result-msg{font-size:1.1rem;color:var(--text-primary);margin-bottom:28px}
+/* FOOTER */
+footer{background:#010508;border-top:1px solid var(--border);padding:50px 0 0}
+.footer-inner{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap;padding-bottom:40px;border-bottom:1px solid var(--border)}
+.footer-brand p{font-size:.85rem;color:var(--text-muted);max-width:240px;margin-top:10px}
+.footer-col h4{font-family:var(--font-display);font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--accent-blue);margin-bottom:16px}
+.footer-col ul li{font-size:.88rem;color:var(--text-muted);margin-bottom:8px}
+.footer-col ul li strong{color:var(--text-secondary)}
+.footer-bottom{padding:18px 0;display:flex;align-items:center;justify-content:space-between;font-size:.78rem;color:var(--text-muted);flex-wrap:wrap;gap:8px}
+.footer-bottom span{font-family:var(--font-display)}
+/* RESPONSIVE */
+@media(max-width:860px){.hero-grid{flex-direction:column;text-align:center}.hero-visual{display:none}.hero-btns{justify-content:center}.hero-sub{margin:0 auto 40px}.problema-layout{flex-direction:column;text-align:center}.nav-links a{padding:5px 8px;font-size:.62rem}.theme-switcher{margin-left:8px}}
+@media(max-width:600px){.nav-links{gap:2px}.card{flex:1 1 100%}.slideshow{height:280px}.slide{padding:24px}}
+  </style>
+</head>
+<body>
+ 
+  <!-- ══ NAVBAR ══ -->
+  <nav id="navbar">
+    <div class="container nav-inner">
+      <a href="#hero" class="nav-logo"><span>SatControl</span></a>
+      <div style="display:flex;align-items:center;">
+        <ul class="nav-links">
+          <li><a href="#problema">Problema</a></li>
+          <li><a href="#tecnologia">Tecnologia</a></li>
+          <li><a href="#objetivos">Objetivos</a></li>
+          <li><a href="#publico">Público</a></li>
+          <li><a href="#beneficios">Benefícios</a></li>
+          <li><a href="#aplicacao">Aplicação</a></li>
+        </ul>
+        <div class="theme-switcher">
+          <button class="theme-btn" data-theme="space"  title="Tema Space"  aria-label="Tema azul espacial"></button>
+          <button class="theme-btn" data-theme="nebula" title="Tema Nebula" aria-label="Tema nebulosa roxo"></button>
+          <button class="theme-btn" data-theme="solar"  title="Tema Solar"  aria-label="Tema solar âmbar"></button>
+        </div>
+      </div>
+    </div>
+  </nav>
+ 
+  <!-- ══ HERO ══ -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-text fade-in">
+          <div class="hero-tag">Sistema Operacional</div>
+          <h1 class="hero-title">
+            SatControl<br>
+            <span class="highlight">Controle Total</span><br>
+            de Satélites
+          </h1>
+          <p class="hero-sub">
+            Plataforma inteligente para monitoramento, comando e rastreamento de satélites em tempo real.
+          </p>
+          <div class="hero-btns">
+            <a href="#problema" class="btn btn-primary">Explorar Solução</a>
+            <a href="#aplicacao" class="btn btn-ghost">Ver Aplicação</a>
+          </div>
+        </div>
+        <div class="hero-visual fade-in" aria-hidden="true">
+          <div class="orbit-ring"><div class="orbit-dot"></div></div>
+          <div class="orbit-ring"><div class="orbit-dot"></div></div>
+          <div class="orbit-ring"><div class="orbit-dot"></div></div>
+          <div class="orbit-center">🛰️</div>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- ══ SLIDESHOW ══ -->
+  <div style="background:var(--bg-secondary);padding:40px 0;">
+    <div class="container">
+      <div class="slideshow-wrap fade-in">
+        <div class="slideshow" id="slideshow">
+          <div class="slide active">
+            <img src="https://placehold.co/80x80/00d4ff/020810?text=S1" alt="Satélite em órbita transmitindo dados para estação terrestre" style="border-radius:50%;border:2px solid rgba(0,212,255,.3);" />
+            <div class="slide-icon" aria-hidden="true">📡</div>
+            <div class="slide-title">Rastreamento em Tempo Real</div>
+            <p class="slide-desc">Monitoramento contínuo da posição e status do satélite via estações terrestres distribuídas globalmente.</p>
+          </div>
+          <div class="slide">
+            <img src="https://placehold.co/80x80/00ff88/020810?text=S2" alt="Painel de telemetria exibindo dados de temperatura e voltagem do satélite" style="border-radius:50%;border:2px solid rgba(0,255,136,.3);" />
+            <div class="slide-icon" aria-hidden="true">📊</div>
+            <div class="slide-title">Telemetria Inteligente</div>
+            <p class="slide-desc">Coleta e análise automática de dados de temperatura, voltagem, altitude e orientação do satélite.</p>
+          </div>
+          <div class="slide">
+            <img src="https://placehold.co/80x80/ff6b35/020810?text=S3" alt="Interface de comando e controle para manobras orbitais" style="border-radius:50%;border:2px solid rgba(255,107,53,.3);" />
+            <div class="slide-icon" aria-hidden="true">🔧</div>
+            <div class="slide-title">Comando e Controle</div>
+            <p class="slide-desc">Envio seguro de comandos para manobras orbitais, ajuste de antenas e gestão de energia a bordo.</p>
+          </div>
+        </div>
+        <div class="slide-arrows">
+          <button class="slide-arrow" id="slide-prev" aria-label="Slide anterior">◀</button>
+          <button class="slide-arrow" id="slide-next" aria-label="Próximo slide">▶</button>
+        </div>
+        <div class="slide-dots">
+          <button class="slide-dot active" aria-label="Slide 1"></button>
+          <button class="slide-dot"        aria-label="Slide 2"></button>
+          <button class="slide-dot"        aria-label="Slide 3"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- ══ SEÇÃO 1 — PROBLEMA ══ -->
+  <section id="problema" class="section">
+    <div class="container">
+      <div class="problema-layout">
+        <div class="problema-visual fade-in">
+          <div class="big-icon" aria-hidden="true">⚠️</div>
+          <img src="https://placehold.co/200x140/0a1628/ff6b35?text=Falha+Orbital" alt="Representação de falha em sistema orbital sem controle adequado" style="margin:20px auto 0;border-radius:8px;border:1px solid rgba(255,107,53,.25);"/>
+        </div>
+        <div class="problema-text">
+          <span class="section-label">// seção 01</span>
+          <h2 class="section-title">O <span class="highlight">Problema</span></h2>
+          <p class="section-sub">Satélites sem controle preciso geram falhas críticas e desperdício de recursos.</p>
+          <div class="cards-grid">
+            <div class="card fade-in">
+              <div class="card-icon" aria-hidden="true">📉</div>
+              <div class="card-title">Falta de Monitoramento</div>
+              <p class="card-text">Sistemas legados não oferecem visibilidade em tempo real do estado do satélite.</p>
+            </div>
+            <div class="card fade-in">
+              <div class="card-icon" aria-hidden="true">🔌</div>
+              <div class="card-title">Falhas de Comunicação</div>
+              <p class="card-text">Interrupções no link de dados causam perda de controle e missões abortadas.</p>
+            </div>
+            <div class="card fade-in">
+              <div class="card-icon" aria-hidden="true">💸</div>
+              <div class="card-title">Alto Custo Operacional</div>
+              <p class="card-text">Processos manuais elevam custos e aumentam o risco de erros humanos críticos.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- ══ SEÇÃO 2 — TECNOLOGIA ══ -->
+  <section id="tecnologia" class="section">
+    <div class="container">
+      <span class="section-label">// seção 02</span>
+      <h2 class="section-title">Nossas <span class="highlight">Tecnologias</span></h2>
+      <p class="section-sub">Stack moderno para comunicação, processamento e controle em ambiente espacial.</p>
+      <div class="cards-grid fade-in">
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">📡</div>
+          <div class="card-title">CCSDS Protocol</div>
+          <p class="card-text">Protocolo internacional para comunicação confiável entre satélite e estação terrestre.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🤖</div>
+          <div class="card-title">Machine Learning</div>
+          <p class="card-text">Algoritmos preditivos detectam anomalias na telemetria antes de se tornarem falhas.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">☁️</div>
+          <div class="card-title">Cloud Computing</div>
+          <p class="card-text">Infraestrutura em nuvem garante alta disponibilidade e processamento distribuído.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🔐</div>
+          <div class="card-title">Criptografia AES-256</div>
+          <p class="card-text">Todos os comandos e dados são criptografados para evitar interceptação maliciosa.</p>
+        </div>
+      </div>
+      <div class="tech-tags fade-in">
+        <div class="tech-tag"><span>🐍</span> Python</div>
+        <div class="tech-tag"><span>🦀</span> Rust</div>
+        <div class="tech-tag"><span>🗄️</span> PostgreSQL</div>
+        <div class="tech-tag"><span>📦</span> Docker</div>
+        <div class="tech-tag"><span>⚡</span> WebSocket</div>
+        <div class="tech-tag"><span>🌍</span> REST API</div>
+        <div class="tech-tag"><span>🔭</span> STK Software</div>
+        <div class="tech-tag"><span>🛸</span> GNSS / GPS</div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- ══ SEÇÃO 3 — OBJETIVOS ══ -->
+  <section id="objetivos" class="section">
+    <div class="container">
+      <span class="section-label">// seção 03</span>
+      <h2 class="section-title"><span class="highlight">Objetivos</span> do Projeto</h2>
+      <p class="section-sub">Metas claras para garantir uma operação orbital confiável e eficiente.</p>
+      <div class="cards-grid fade-in">
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🎯</div>
+          <div class="card-title">Controle Autônomo</div>
+          <p class="card-text">Automatizar manobras de correção orbital reduzindo intervenção humana em 70%.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">📶</div>
+          <div class="card-title">Uptime 99,9%</div>
+          <p class="card-text">Garantir disponibilidade máxima do link de comunicação durante janelas de passagem.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🔍</div>
+          <div class="card-title">Detecção Rápida</div>
+          <p class="card-text">Identificar e responder a anomalias em menos de 200 milissegundos.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">📈</div>
+          <div class="card-title">Escalabilidade</div>
+          <p class="card-text">Suportar constelações de múltiplos satélites a partir de uma única plataforma.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- ══ SEÇÃO 4 — PÚBLICO-ALVO ══ -->
+  <section id="publico" class="section">
+    <div class="container">
+      <span class="section-label">// seção 04</span>
+      <h2 class="section-title"><span class="highlight">Público-Alvo</span></h2>
+      <p class="section-sub">Quem se beneficia diretamente com o SatControl?</p>
+      <div class="cards-grid fade-in">
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🏛️</div>
+          <div class="card-title">Agências Espaciais</div>
+          <p class="card-text">NASA, AEB e ESA necessitam de controle preciso para missões científicas críticas.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🏢</div>
+          <div class="card-title">Operadoras Privadas</div>
+          <p class="card-text">Empresas como SpaceX e OneWeb gerenciam constelações de internet via satélite.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🌦️</div>
+          <div class="card-title">Meteorologia</div>
+          <p class="card-text">Institutos climáticos dependem de satélites para previsões precisas em tempo real.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🎓</div>
+          <div class="card-title">Universidades</div>
+          <p class="card-text">Laboratórios acadêmicos operam CubeSats e nanosatélites para pesquisa espacial.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- ══ SEÇÃO 5 — BENEFÍCIOS ══ -->
+  <section id="beneficios" class="section">
+    <div class="container">
+      <span class="section-label">// seção 05</span>
+      <h2 class="section-title"><span class="highlight-green">Benefícios</span> da Solução</h2>
+      <p class="section-sub">Impacto real na eficiência, segurança e custo das operações espaciais.</p>
+      <div class="cards-grid fade-in">
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">⚡</div>
+          <div class="card-title">Resposta Imediata</div>
+          <p class="card-text">Comandos executados em milissegundos via uplink de alta frequência.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">💰</div>
+          <div class="card-title">Redução de Custos</div>
+          <p class="card-text">Automação reduz equipe operacional necessária em até 60%.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🛡️</div>
+          <div class="card-title">Segurança Total</div>
+          <p class="card-text">Autenticação multifator e criptografia em todos os canais de comando.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🌐</div>
+          <div class="card-title">Cobertura Global</div>
+          <p class="card-text">Rede de estações distribuídas garante contato em qualquer ponto da órbita.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🔋</div>
+          <div class="card-title">Gestão de Energia</div>
+          <p class="card-text">Otimização dos painéis solares aumenta a vida útil do satélite em 20%.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">📋</div>
+          <div class="card-title">Relatórios Automáticos</div>
+          <p class="card-text">Dashboards com histórico completo de missões e alertas configuráveis.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- ══ SEÇÃO 6 — APLICAÇÃO NO DIA A DIA ══ -->
+  <section id="aplicacao" class="section">
+    <div class="container">
+      <span class="section-label">// seção 06</span>
+      <h2 class="section-title">Aplicação no <span class="highlight">Dia a Dia</span></h2>
+      <p class="section-sub">Como o SatControl opera na prática durante uma missão real.</p>
+ 
+      <div class="cards-grid fade-in" style="margin-bottom:60px;">
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🌅</div>
+          <div class="card-title">Início de Turno</div>
+          <p class="card-text">Operadores recebem relatório automático do status noturno do satélite ao logar.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">📡</div>
+          <div class="card-title">Janelas de Passagem</div>
+          <p class="card-text">Sistema agenda downloads de dados e uploads de comandos nas janelas disponíveis.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🚨</div>
+          <div class="card-title">Alertas Críticos</div>
+          <p class="card-text">IA detecta anomalia térmica e notifica equipe com plano de correção sugerido.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">📦</div>
+          <div class="card-title">Coleta de Dados</div>
+          <p class="card-text">Imagens e sensores são baixados automaticamente e entregues aos cientistas.</p>
+        </div>
+      </div>
+ 
+      <!-- FORMULÁRIO -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:40px;" class="fade-in">
+        <h3 class="section-title" style="font-size:1.4rem;margin-bottom:8px;">Entre em <span class="highlight">Contato</span></h3>
+        <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:28px;">Quer saber mais sobre o SatControl? Envie sua mensagem.</p>
+        <form class="form-wrap" id="contactForm" novalidate>
+          <div class="form-group">
+            <label for="nome">Nome Completo</label>
+            <input type="text" id="nome" name="nome" placeholder="Seu nome" data-required autocomplete="name"/>
+            <span class="error-msg">Campo obrigatório.</span>
+          </div>
+          <div class="form-group">
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" placeholder="seu@email.com" data-required autocomplete="email"/>
+            <span class="error-msg">Campo obrigatório.</span>
+          </div>
+          <div class="form-group">
+            <label for="setor">Setor de Interesse</label>
+            <select id="setor" name="setor" data-required>
+              <option value="">Selecione...</option>
+              <option>Agência Espacial</option>
+              <option>Empresa Privada</option>
+              <option>Universidade / Pesquisa</option>
+              <option>Meteorologia</option>
+              <option>Outro</option>
+            </select>
+            <span class="error-msg">Selecione uma opção.</span>
+          </div>
+          <div class="form-group">
+            <label for="mensagem">Mensagem</label>
+            <textarea id="mensagem" name="mensagem" placeholder="Descreva sua necessidade..." data-required></textarea>
+            <span class="error-msg">Campo obrigatório.</span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-send">📤 Enviar Mensagem</button>
+          <div class="form-success" id="formSuccess">
+            ✅ Mensagem recebida! Nossa equipe entrará em contato em breve.
+          </div>
+        </form>
+      </div>
+ 
+      <!-- QUIZ -->
+      <div style="margin-top:60px;" class="fade-in">
+        <span class="section-label">// quiz</span>
+        <h3 class="section-title" style="font-size:1.4rem;margin-bottom:8px;">Teste seus <span class="highlight">Conhecimentos</span></h3>
+        <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:32px;">10 perguntas sobre sistemas de controle de satélites.</p>
+        <div class="quiz-wrap" id="quiz-container">
+          <div class="quiz-progress-bar">
+            <div class="quiz-progress-fill" id="quiz-fill" style="width:0%"></div>
+          </div>
+          <div id="quiz-content">
+            <div class="quiz-counter" id="quiz-counter">PERGUNTA 1 / 10</div>
+            <div class="quiz-question" id="quiz-question"></div>
+            <div class="quiz-options" id="quiz-options"></div>
+            <div class="quiz-feedback" id="quiz-feedback"></div>
+            <button class="btn btn-ghost" id="quiz-next" style="display:none;">Próxima Pergunta →</button>
+          </div>
+          <div class="quiz-result" id="quiz-result">
+            <div class="quiz-result-score" id="quiz-score"></div>
+            <div class="quiz-result-label" id="quiz-percent"></div>
+            <div class="quiz-result-msg" id="quiz-result-msg"></div>
+            <button class="btn btn-primary" id="quiz-restart">🔄 Tentar Novamente</button>
+          </div>
+        </div>
+      </div>
+ 
+    </div>
+  </section>
+ 
+  <!-- ══ FOOTER ══ -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <div class="nav-logo"><span>Satcontrol</span></div>
+          <p>Plataforma de controle e monitoramento de satélites — disciplina de Frontend Design &amp; Web Development.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navegação</h4>
+          <ul>
+            <li><a href="#problema">Problema</a></li>
+            <li><a href="#tecnologia">Tecnologia</a></li>
+            <li><a href="#objetivos">Objetivos</a></li>
+            <li><a href="#publico">Público-Alvo</a></li>
+            <li><a href="#beneficios">Benefícios</a></li>
+            <li><a href="#aplicacao">Aplicação</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Equipe</h4>
+          <ul>
+            <li><strong>Guilherme Kooji Kubota</strong></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span id="footer-year"></span> SatControl — Todos os direitos reservados.</span>
+        <span>Disciplina: Frontend Design &amp; Web Development</span>
+      </div>
+    </div>
+  </footer>
+ 
+  <!-- Em produção: <script src="js/main.js"></script><script src="js/quiz.js"></script> -->
+  <script>
+// ── main.js ──
+document.addEventListener('DOMContentLoaded',()=>{initScrollFade();initNavActive();initThemeSwitcher();initSlideshow();initForm();initFooterYear();});
+function initScrollFade(){const els=document.querySelectorAll('.fade-in');const obs=new IntersectionObserver((entries)=>{entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('visible'),i*70);}});},{threshold:0.1});els.forEach(el=>obs.observe(el));}
+function initNavActive(){const sections=document.querySelectorAll('section[id]');const links=document.querySelectorAll('.nav-links a');const obs=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.remove('active'));const active=document.querySelector(`.nav-links a[href="#${e.target.id}"]`);if(active)active.classList.add('active');}});},{threshold:0.45});sections.forEach(s=>obs.observe(s));}
+function initThemeSwitcher(){const btns=document.querySelectorAll('.theme-btn');const body=document.body;const saved=localStorage.getItem('orbital-theme')||'space';applyTheme(saved);btns.forEach(btn=>{btn.addEventListener('click',()=>{const theme=btn.dataset.theme;applyTheme(theme);localStorage.setItem('orbital-theme',theme);});});function applyTheme(theme){body.classList.remove('theme-nebula','theme-solar');if(theme==='nebula')body.classList.add('theme-nebula');if(theme==='solar')body.classList.add('theme-solar');btns.forEach(b=>b.classList.toggle('active',b.dataset.theme===theme));}}
+function initSlideshow(){const slides=document.querySelectorAll('.slide');const dots=document.querySelectorAll('.slide-dot');let current=0;let timer;function goTo(idx){slides[current].classList.remove('active');dots[current].classList.remove('active');current=(idx+slides.length)%slides.length;slides[current].classList.add('active');dots[current].classList.add('active');}function next(){goTo(current+1);}function prev(){goTo(current-1);}function startAuto(){clearInterval(timer);timer=setInterval(next,4500);}goTo(0);startAuto();dots.forEach((dot,i)=>{dot.addEventListener('click',()=>{goTo(i);startAuto();});});const btnNext=document.getElementById('slide-next');const btnPrev=document.getElementById('slide-prev');if(btnNext)btnNext.addEventListener('click',()=>{next();startAuto();});if(btnPrev)btnPrev.addEventListener('click',()=>{prev();startAuto();});}
+function initForm(){const form=document.getElementById('contactForm');if(!form)return;form.addEventListener('submit',e=>{e.preventDefault();let valid=true;const fields=form.querySelectorAll('[data-required]');fields.forEach(field=>{const group=field.closest('.form-group');if(!field.value.trim()){group.classList.add('invalid');valid=false;}else{group.classList.remove('invalid');}});const emailField=form.querySelector('#email');if(emailField&&emailField.value.trim()){const re=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;const group=emailField.closest('.form-group');if(!re.test(emailField.value.trim())){group.classList.add('invalid');group.querySelector('.error-msg').textContent='E-mail inválido.';valid=false;}}if(valid){const success=document.getElementById('formSuccess');const btn=form.querySelector('.btn-send');btn.textContent='Enviando...';btn.disabled=true;setTimeout(()=>{form.reset();btn.style.display='none';if(success)success.style.display='block';},1200);}});form.querySelectorAll('input,textarea,select').forEach(field=>{field.addEventListener('input',()=>{field.closest('.form-group').classList.remove('invalid');});});}
+function initFooterYear(){const el=document.getElementById('footer-year');if(el)el.textContent=new Date().getFullYear();}
+ 
+// ── quiz.js ──
+const QUESTIONS=[{q:"Qual é a principal função de um sistema de controle de satélite?",opts:["Monitorar o clima terrestre","Gerenciar trajetória, orientação e comunicação do satélite","Transmitir TV a cabo","Processar dados bancários"],answer:1},{q:"O que significa a sigla TT&C em sistemas espaciais?",opts:["Tracking, Telemetry & Communication","Transfer, Timing & Control","Telemetry, Tracking & Command","Technology, Testing & Calibration"],answer:2},{q:"Qual subsistema é responsável por manter a orientação correta do satélite?",opts:["ADCS — Attitude Determination and Control System","EPS — Electrical Power System","OBC — On-Board Computer","RF — Radio Frequency"],answer:0},{q:"O que é uma 'janela de passagem' no contexto de satélites?",opts:["Um módulo de energia solar","O intervalo em que o satélite está visível pela estação terrestre","Um protocolo de comunicação criptografado","A abertura física da antena de transmissão"],answer:1},{q:"Qual protocolo é amplamente usado na camada de enlace de satélites?",opts:["HTTP/2","Modbus TCP","CCSDS (Consultative Committee for Space Data Systems)","Zigbee"],answer:2},{q:"O que é telemetria no contexto espacial?",opts:["Sistema de propulsão iônica","Transmissão automática de dados de status do satélite à estação","Processo de lançamento do foguete","Cálculo da órbita geoestacionária"],answer:1},{q:"Em qual altitude está a órbita GEO (Geoestacionária)?",opts:["Aproximadamente 400 km","Aproximadamente 2.000 km","Aproximadamente 20.200 km","Aproximadamente 35.786 km"],answer:3},{q:"Qual é a principal vantagem de uma órbita LEO (Low Earth Orbit)?",opts:["Cobertura permanente de um ponto na Terra","Menor latência e custo de comunicação","Ausência total de interferência atmosférica","Período orbital de 24 horas"],answer:1},{q:"Qual tecnologia é fundamental para o posicionamento preciso de satélites?",opts:["Bluetooth 5.0","GNSS (Global Navigation Satellite System)","NFC","Wi-Fi 6E"],answer:1},{q:"O que é o 'delta-v' na mecânica orbital?",opts:["A diferença de voltagem entre painéis solares","Um codec de vídeo para transmissão espacial","A variação de velocidade necessária para mudar a órbita","A frequência de atualização do sistema de controle"],answer:2}];
+let currentQ=0,score=0,answered=false;
+document.addEventListener('DOMContentLoaded',initQuiz);
+function initQuiz(){const wrap=document.getElementById('quiz-container');if(!wrap)return;renderQuestion();const nextBtn=document.getElementById('quiz-next');if(nextBtn)nextBtn.addEventListener('click',handleNext);const restartBtn=document.getElementById('quiz-restart');if(restartBtn)restartBtn.addEventListener('click',restartQuiz);}
+function renderQuestion(){const data=QUESTIONS[currentQ];const total=QUESTIONS.length;const letters=['A','B','C','D'];document.getElementById('quiz-fill').style.width=`${(currentQ/total)*100}%`;document.getElementById('quiz-counter').textContent=`PERGUNTA ${currentQ+1} / ${total}`;document.getElementById('quiz-question').textContent=data.q;const optWrap=document.getElementById('quiz-options');optWrap.innerHTML='';data.opts.forEach((opt,i)=>{const btn=document.createElement('button');btn.className='quiz-option';btn.dataset.letter=letters[i];btn.dataset.index=i;btn.textContent=opt;btn.addEventListener('click',()=>handleAnswer(btn,i));optWrap.appendChild(btn);});const fb=document.getElementById('quiz-feedback');fb.className='quiz-feedback';fb.textContent='';document.getElementById('quiz-next').style.display='none';answered=false;}
+function handleAnswer(btn,idx){if(answered)return;answered=true;const data=QUESTIONS[currentQ];const isRight=idx===data.answer;const fb=document.getElementById('quiz-feedback');const allBtns=document.querySelectorAll('.quiz-option');if(isRight){score++;btn.classList.add('correct');fb.textContent='✓ Correto!';fb.className='quiz-feedback show correct-fb';}else{btn.classList.add('wrong');allBtns[data.answer].classList.add('correct');fb.textContent=`✗ Incorreto. A resposta certa era: "${QUESTIONS[currentQ].opts[data.answer]}"`;fb.className='quiz-feedback show wrong-fb';}allBtns.forEach(b=>b.disabled=true);document.getElementById('quiz-next').style.display='inline-flex';}
+function handleNext(){currentQ++;if(currentQ<QUESTIONS.length){renderQuestion();}else{showResult();}}
+function showResult(){const total=QUESTIONS.length;const percent=Math.round((score/total)*100);document.getElementById('quiz-content').style.display='none';const result=document.getElementById('quiz-result');result.classList.add('show');document.getElementById('quiz-score').textContent=`${score}/${total}`;document.getElementById('quiz-percent').textContent=`${percent}% de acerto`;let msg='';if(percent===100)msg='🏆 Perfeito! Você domina sistemas de controle de satélites!';else if(percent>=70)msg='🚀 Ótimo desempenho! Você tem bom conhecimento na área.';else if(percent>=40)msg='🛰️ Bom começo! Vale revisar os conceitos de TT&C e órbitas.';else msg='📡 Continue estudando! A engenharia espacial é fascinante.';document.getElementById('quiz-result-msg').textContent=msg;document.getElementById('quiz-fill').style.width='100%';}
+function restartQuiz(){currentQ=0;score=0;answered=false;document.getElementById('quiz-content').style.display='block';document.getElementById('quiz-result').classList.remove('show');renderQuestion();}
+  </script>
+</body>
+</html>
+ 
